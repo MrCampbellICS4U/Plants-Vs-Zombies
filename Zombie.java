@@ -9,12 +9,14 @@ public class Zombie {
 	private int attackSpeed;
 	private int damage;
 	private int frame=0;
-	public Zombie(int h, int x, int y, int as, int dmg) {
+	private int movementSpeed;
+	public Zombie(int h, int x, int y, int as, int dmg, int ms) {
 		h=health;
 		posX=x;
 		posY=y;
 		attackSpeed=as;
 		damage=dmg;
+		movementSpeed=ms;
 	}
 	public int getHealth() {
 		return health;
@@ -48,5 +50,8 @@ public class Zombie {
 	}
 	public void reduceHealth(int h) {
 		health-=h;
+	}
+	public void move() {
+		posX-=movementSpeed;
 	}
 }
