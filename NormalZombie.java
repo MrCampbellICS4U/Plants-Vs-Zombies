@@ -15,7 +15,7 @@ public class NormalZombie extends Zombie {
 	public NormalZombie(int h, int x, int y, int as, int dmg, int ms, String f) {
 		super(h, x, y, as, dmg, ms);
 		filename=f;
-		img =loadImage(f);
+		img =loadImage(filename);
 	}
 	
 	Image loadImage(String filename) {
