@@ -49,25 +49,25 @@ public class NormalZombie extends Zombie {
 				f%=7;
 				setFrame(f);
 			}
-			return f*38;
+			return f*37;
 		}
 		else {
 			if(f>=7) {
 				f%=7;
 				setFrame(f);
 			}
-			return f*38;
+			return f*37;
 		}
 	}
 	public int getImgY() {
 		if(isMoving) {
-			return 220;
+			return 100;
 		}
-		return 132;
+		return 185;
 	}
 	
 	public int getW() {
-		return 38;
+		return 35;
 	}
 	public int getH() {
 		return 44;

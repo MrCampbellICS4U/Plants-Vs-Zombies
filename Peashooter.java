@@ -9,7 +9,7 @@ public class Peashooter extends Plant {
 	
 	private String filename;
 	private Image img;
-	private boolean isAttacking = false;
+	private boolean isAttacking = true;
 	
 	
 	public Peashooter(int h, int x, int y, int as, int dmg, String f) {
@@ -49,7 +49,7 @@ public class Peashooter extends Plant {
 				f%=3;
 				setFrame(f);
 			}
-			return f*67;
+			return f*63;
 		}
 		else {
 			if(f>=5) {
@@ -61,14 +61,50 @@ public class Peashooter extends Plant {
 	}
 	public int getImgY() {
 		if(isAttacking) {
-			return 77;
+			return 80;
 		}
 		return 0;
 	}
 	
 	public int getW() {
-		return 67;
+		if(isAttacking&&getFrame()==0) {
+			return 70;
+		}
+		else if(isAttacking&&getFrame()%3!=0) {
+			return 65;
+		}
+		else if(isAttacking) {
+			return 60;
+		}
+		return 65;
 	}
+	
+	public int getAdjustment() {
+		if(isAttacking) {
+			return 0;
+		}
+		else {
+			if(getFrame()==0||getFrame()==4) {
+				return 0;
+			}
+			else if(getFrame()==1||getFrame()==3){
+				return 1;
+			}
+			else if(getFrame()==2) {
+				return 3;
+			}
+			else if(getFrame()==5) {
+				return -3;
+			}
+			else if(getFrame()==6) {
+				return -2;
+			}
+			else {
+				return -1;
+			}
+		}
+	}
+	
 	public int getH() {
 		return 77;
 	}
