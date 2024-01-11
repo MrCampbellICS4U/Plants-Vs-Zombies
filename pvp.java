@@ -1,3 +1,4 @@
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -8,11 +9,12 @@ import java.awt.image.BufferedImage;
 // The main class that runs the game
 public class pvp implements ActionListener {
     JFrame frame;
-    static int panW = 1300, panH = 800;
+    static int panW = 1000, panH = 650;
     JPanel mainPanel;
     IntroPanel introPanel;
     GamePanel gamepanel;
     CardLayout cardLayout;
+    Timer timer;
 
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -31,7 +33,7 @@ public class pvp implements ActionListener {
         cardLayout = new CardLayout();
         mainPanel.setLayout(cardLayout);
 
-        BufferedImage introBackground = loadImage("Main_Menu.png");
+        Image introBackground = loadImage("/Main_Menu.png");
         introPanel = new IntroPanel() {
             @Override
             public void paintComponent(Graphics g) {
@@ -41,7 +43,7 @@ public class pvp implements ActionListener {
             }
         };
         introPanel.setLayout(new BoxLayout(introPanel, BoxLayout.PAGE_AXIS));
-        introPanel.setBorder(BorderFactory.createEmptyBorder(650, 10, 100, 10));
+        introPanel.setBorder(BorderFactory.createEmptyBorder(500, 10, 100, 10));
 
         JButton startgame = new JButton("START GAME");
         startgame.setFont(new Font("Condensed Bold", Font.BOLD, 20));
@@ -53,7 +55,7 @@ public class pvp implements ActionListener {
 
         mainPanel.add(introPanel, "intro");
 
-        BufferedImage gameBackground = loadImage("EMPTYLANW.jpg");
+        Image gameBackground = loadImage("/EMPTYLANW.jpg");
         gamepanel = new GamePanel() {
             @Override
             public void paintComponent(Graphics g) {
@@ -65,14 +67,22 @@ public class pvp implements ActionListener {
 
         mainPanel.add(gamepanel, "game");
 
+        frame.add(mainPanel);
+        frame.pack();
+        frame.setVisible(true);
+
         startgame.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(mainPanel, "game");
             }
         });
-        frame.add(mainPanel);
-        frame.pack();
-        frame.setVisible(true);
+
+        timer = new Timer(30, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        timer.start();
     }
 
     @Override
@@ -97,14 +107,16 @@ public class pvp implements ActionListener {
      * @param name the name of the image
      * @return the image
      */
-    static BufferedImage loadImage(String name) {
-        BufferedImage img = null;
-        try {
-            img = ImageIO.read(new File(name));
-        } catch (Exception e) {
-            System.out.println(e.toString());
-            JOptionPane.showMessageDialog(null, "An image failed to load: " + name, "Error", JOptionPane.ERROR_MESSAGE);
+    Image loadImage(String filename) {
+        Image image = null;
+        java.net.URL imageURL = this.getClass().getResource(filename);
+        if (imageURL != null) {
+            ImageIcon icon = new ImageIcon(imageURL);
+            image = icon.getImage();
+        } else {
+            JOptionPane.showMessageDialog(null, "An image failed to load: " + filename, "ERROR",
+                    JOptionPane.ERROR_MESSAGE);
         }
-        return img;
+        return image;
     }
 }
