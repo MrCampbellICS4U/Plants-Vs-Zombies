@@ -12,8 +12,8 @@ public class Peashooter extends Plant {
 	private boolean isAttacking = true;
 	
 	
-	public Peashooter(int h, int x, int y, int as, int dmg, String f) {
-		super(h, x, y, as, dmg);
+	public Peashooter(int h, int x, int y, int as, int dmg, String f, String t) {
+		super(h, x, y, as, dmg, t);
 		filename=f;
 		img =loadImage(f);
 	}

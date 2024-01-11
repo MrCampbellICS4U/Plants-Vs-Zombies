@@ -9,12 +9,15 @@ public class Plant {
 	private int attackSpeed;
 	private int damage;
 	private int frame=0;
-	public Plant(int h, int x, int y, int as, int dmg) {
-		h=health;
+	private String type;
+	
+	public Plant(int h, int x, int y, int as, int dmg, String t) {
+		health=h;
 		posX=x;
 		posY=y;
 		attackSpeed=as;
 		damage=dmg;
+		type = t;
 	}
 	public int getHealth() {
 		return health;

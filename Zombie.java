@@ -11,7 +11,7 @@ public class Zombie {
 	private int frame=0;
 	private int movementSpeed;
 	public Zombie(int h, int x, int y, int as, int dmg, int ms) {
-		h=health;
+		health=h;
 		posX=x;
 		posY=y;
 		attackSpeed=as;
