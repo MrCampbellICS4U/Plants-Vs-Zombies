@@ -5,6 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.awt.image.BufferedImage;
 
 /*
@@ -35,6 +36,17 @@ public class pvp implements ActionListener {
     Sun sunObj;
     boolean isFalling = false;
     int sunCount = 0;
+    int mx=-100, my=-100;
+    long frameCtr=0;
+    //-1 is no plant
+    //0 is peashooter
+    //1 is walnut
+    int chosenPlant = -1;
+    Rectangle peashooterCard = new Rectangle(40, 20, 100, 50);
+    Image peashooterCardImg = loadImage("/peashooterCard.png");
+    Rectangle walnutCard = new Rectangle(160, 20, 100, 50);
+    Image walnutCardImg = loadImage("/walnutCard.png");
+    ArrayList<Plant> plants = new ArrayList();
     
     private class MouseHandler extends MouseAdapter{
         @Override   
@@ -42,6 +54,39 @@ public class pvp implements ActionListener {
             if (sunObj.contains(e.getPoint())){
                 sunCount+=25;
                 respawnSun();
+            }
+            else {
+            	if(peashooterCard.contains(e.getPoint())) {
+            		chosenPlant=0;
+            	}
+            	else if(walnutCard.contains(e.getPoint())) {
+            		chosenPlant=1;
+            	}
+            	else {
+            		mx=e.getX();
+            		my=e.getY();
+            		mx-=311;
+            		my-=124;
+            		if(mx>=0&&my>=0) {
+            			System.out.println(mx + " " + my);
+            			mx=mx/66;
+            			my=my/89;
+            			System.out.println(mx + " " + my);
+            			if(mx<9&&my<5) {
+            				mx*=66;
+            				my*=89;
+            				System.out.println(mx + " " + my);
+            				if(chosenPlant==0) {
+            					plants.add(new Peashooter(100, mx+2+311, my+2+124, 10, 10, "/Peashooter.png", "Peashooter"));
+            					chosenPlant=-1;
+            				}
+            				else if(chosenPlant==1){
+            					plants.add(new Walnut(100, mx+2+311, my+2+124, 10, 10, "/Walnut.png", "Walnut"));
+            					chosenPlant=-1;
+            				}
+            			}
+            		}
+            	}
             }
         }
     }
@@ -151,6 +196,29 @@ public class pvp implements ActionListener {
                 g2.setPaint(new Color(255,255,255));
                 g2.setFont(new Font("Arial", Font.BOLD, 30));
                 g2.drawString("Sun Count: " + sunCount, 40, 40);
+                g2.drawImage(peashooterCardImg, peashooterCard.x, peashooterCard.y, peashooterCard.width, peashooterCard.height, null);
+                g2.drawImage(walnutCardImg, walnutCard.x, walnutCard.y, walnutCard.width, walnutCard.height, null);
+                frameCtr++;
+                for(Plant p : plants) {
+                	if(p.getType().equals("Peashooter")) {
+                		Peashooter ps = (Peashooter)p;
+                		g.drawImage(ps.getimg(),							
+            					ps.getX()+ps.getAdjustment(), ps.getY()+20, ps.getX()+60+ps.getAdjustment(), ps.getY() + 60,  //destination
+            					ps.getImgX(), ps.getImgY(), ps.getImgX()+ps.getW(), ps.getImgY()+ps.getH(),						
+            					null);
+                	}
+                	else if(p.getType().equals("Walnut")) {
+                		Walnut w = (Walnut)p;
+                		g.drawImage(w.getimg(),							
+            					w.getX()+w.getAdjustment(), w.getY()+20, w.getX()+60+w.getAdjustment(), w.getY() + 60,  //destination
+            					w.getImgX(), w.getImgY(), w.getImgX()+w.getW(), w.getImgY()+w.getH(),						
+            					null);
+                	}
+                	if(frameCtr%20==0) {
+                		p.incrementFrame();
+                		frameCtr=0;
+                	}
+                }
             }
         };
 

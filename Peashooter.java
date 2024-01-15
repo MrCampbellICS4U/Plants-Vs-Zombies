@@ -9,7 +9,7 @@ public class Peashooter extends Plant {
 	
 	private String filename;
 	private Image img;
-	private boolean isAttacking = true;
+	private boolean isAttacking = false;
 	
 	
 	public Peashooter(int h, int x, int y, int as, int dmg, String f, String t) {
@@ -85,7 +85,7 @@ public class Peashooter extends Plant {
 		}
 		else {
 			if(getFrame()==0||getFrame()==4) {
-				return 0;
+				return -3;
 			}
 			else if(getFrame()==1||getFrame()==3){
 				return 1;

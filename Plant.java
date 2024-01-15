@@ -52,4 +52,7 @@ public class Plant {
 	public void reduceHealth(int h) {
 		health-=h;
 	}
+	public String getType() {
+		return type;
+	}
 }
