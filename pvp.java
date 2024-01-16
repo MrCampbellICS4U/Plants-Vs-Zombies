@@ -205,9 +205,10 @@ public class pvp implements ActionListener {
                 g2.drawImage(gameBackground, 0, 0, getWidth(), getHeight(), null);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 sunObj.draw(g2, sun);
-                g2.setPaint(new Color(255,255,255));
-                g2.setFont(new Font("Arial", Font.BOLD, 30));
-                g2.drawString("Sun Count: " + sunCount, 40, 40);
+                g2.setPaint(Color.BLACK);
+                g2.setFont(new Font("Monospaced", Font.BOLD, 20));
+                int sunCountDigit = Integer.toString(sunCount).length();
+                g2.drawString(Integer.toString(sunCount), 520-(sunCountDigit-1)*5, 118);
                 g2.drawImage(peashooterCardImg, peashooterCard.x, peashooterCard.y, peashooterCard.width, peashooterCard.height, null);
                 g2.drawImage(walnutCardImg, walnutCard.x, walnutCard.y, walnutCard.width, walnutCard.height, null);
                 frameCtr++;
