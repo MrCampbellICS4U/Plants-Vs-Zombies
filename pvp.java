@@ -47,6 +47,15 @@ public class pvp implements ActionListener {
     Rectangle walnutCard = new Rectangle(160, 20, 100, 50);
     Image walnutCardImg = loadImage("/walnutCard.png");
     ArrayList<Plant> plants = new ArrayList();
+    ArrayList<Zombie> zombies = new ArrayList();
+    int spawnZombieCtr=0;
+    boolean hasPlant[][] = new boolean[9][5];
+    
+    void spawnZombie() {
+    	int rand = (int)(Math.random()*5);
+    	int zombieY = rand*89+124;
+    	zombies.add(new NormalZombie(100, 1000, zombieY, 10, 10, 3, "/Zombies.png"));
+    }
     
     private class MouseHandler extends MouseAdapter{
         @Override   
@@ -68,14 +77,12 @@ public class pvp implements ActionListener {
             		mx-=311;
             		my-=124;
             		if(mx>=0&&my>=0) {
-            			System.out.println(mx + " " + my);
             			mx=mx/66;
             			my=my/89;
-            			System.out.println(mx + " " + my);
-            			if(mx<9&&my<5) {
+            			if(mx<9&&my<5&&!hasPlant[mx][my]) {
+            				hasPlant[mx][my]=true;
             				mx*=66;
             				my*=89;
-            				System.out.println(mx + " " + my);
             				if(chosenPlant==0) {
             					plants.add(new Peashooter(100, mx+2+311, my+2+124, 10, 10, "/Peashooter.png", "Peashooter"));
             					chosenPlant=-1;
@@ -137,6 +144,11 @@ public class pvp implements ActionListener {
         
         sun = loadImage("/SunImg.png");
         sunObj = new Sun(frame.getWidth()/2, -55, 50, 50);
+        for(int i = 0; i < 9; i++) {
+        	for(int j = 0; j < 5; j++) {
+        		hasPlant[i][j]=false;
+        	}
+        }
         
         timer = new Timer(5, new ActionListener(){
             @Override
@@ -199,6 +211,7 @@ public class pvp implements ActionListener {
                 g2.drawImage(peashooterCardImg, peashooterCard.x, peashooterCard.y, peashooterCard.width, peashooterCard.height, null);
                 g2.drawImage(walnutCardImg, walnutCard.x, walnutCard.y, walnutCard.width, walnutCard.height, null);
                 frameCtr++;
+                spawnZombieCtr++;
                 for(Plant p : plants) {
                 	if(p.getType().equals("Peashooter")) {
                 		Peashooter ps = (Peashooter)p;
@@ -218,6 +231,27 @@ public class pvp implements ActionListener {
                 		p.incrementFrame();
                 		frameCtr=0;
                 	}
+                }
+                if(spawnZombieCtr%10==0) {
+                	for(Zombie z : zombies) {
+                		z.incrementFrame();
+                	}
+                }
+                if(spawnZombieCtr%40==0) {
+                	for(Zombie z : zombies) {
+                		z.move();
+                	}
+                }
+                if(spawnZombieCtr%200==0) {
+            		spawnZombie();
+            		spawnZombieCtr=0;
+            	}
+                for(Zombie z : zombies) {
+                	NormalZombie nz = (NormalZombie)z;
+                	g.drawImage(nz.getimg(),							
+        					nz.getX(), nz.getY(), nz.getX()+50, nz.getY()+80,  //destination
+        					nz.getImgX(), nz.getImgY(), nz.getImgX()+nz.getW(), nz.getImgY()+nz.getH(),						
+        					null);
                 }
             }
         };

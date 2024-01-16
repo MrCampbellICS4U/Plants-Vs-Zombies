@@ -9,7 +9,7 @@ public class NormalZombie extends Zombie {
 	
 	private String filename;
 	private Image img;
-	private boolean isMoving = false;
+	private boolean isMoving = true;
 	
 	
 	public NormalZombie(int h, int x, int y, int as, int dmg, int ms, String f) {
