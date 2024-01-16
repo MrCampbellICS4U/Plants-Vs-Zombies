@@ -79,7 +79,7 @@ public class pvp implements ActionListener {
             		if(mx>=0&&my>=0) {
             			mx=mx/66;
             			my=my/89;
-            			if(mx<9&&my<5&&!hasPlant[mx][my]) {
+            			if(mx<9&&my<5&&!hasPlant[mx][my]&&chosenPlant!=-1) {
             				hasPlant[mx][my]=true;
             				mx*=66;
             				my*=89;
