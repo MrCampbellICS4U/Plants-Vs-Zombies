@@ -4,6 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+
+import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.LineListener;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+
 import java.awt.image.BufferedImage;
 
 // The main class that runs the game
@@ -15,6 +23,8 @@ public class pvp implements ActionListener {
     GamePanel gamepanel;
     CardLayout cardLayout;
     Timer timer;
+
+    static Clip clip;
 
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -33,19 +43,14 @@ public class pvp implements ActionListener {
         cardLayout = new CardLayout();
         mainPanel.setLayout(cardLayout);
 
-        Image introBackground = loadImage("/Main_Menu.png");
-        introPanel = new IntroPanel() {
-            @Override
-            public void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.drawImage(introBackground, 0, 0, getWidth(), getHeight(), null);
-            }
-        };
+        introPanel = new IntroPanel();
         introPanel.setLayout(new BoxLayout(introPanel, BoxLayout.PAGE_AXIS));
         introPanel.setBorder(BorderFactory.createEmptyBorder(500, 10, 100, 10));
 
+        playMusic("soundRes/Crazy_Dave.wav");
+
         JButton startgame = new JButton("START GAME");
+        startgame.setBackground(new Color(178, 210, 53, 255));
         startgame.setFont(new Font("Condensed Bold", Font.BOLD, 20));
         startgame.setAlignmentX(0.5f);
         Dimension size = new Dimension(175, 90);
@@ -55,15 +60,7 @@ public class pvp implements ActionListener {
 
         mainPanel.add(introPanel, "intro");
 
-        Image gameBackground = loadImage("/EMPTYLANW.jpg");
-        gamepanel = new GamePanel() {
-            @Override
-            public void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.drawImage(gameBackground, 0, 0, getWidth(), getHeight(), null);
-            }
-        };
+        gamepanel = new GamePanel();
 
         mainPanel.add(gamepanel, "game");
 
@@ -74,6 +71,8 @@ public class pvp implements ActionListener {
         startgame.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(mainPanel, "game");
+                playMusic("soundRes/Grasswalk.wav");
+
             }
         });
 
@@ -92,13 +91,39 @@ public class pvp implements ActionListener {
     }
 
     class IntroPanel extends JPanel {
+        Image introBackground = loadImage("/Main_Menu.png");
+
         IntroPanel() {
             setPreferredSize(new Dimension(panW, panH));
         }
+
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
+            g2.drawImage(introBackground, 0, 0, getWidth(), getHeight(), null);
+        }
+
     }
 
     class GamePanel extends JPanel {
+        Image gameBackground = loadImage("/EMPTYLANW.jpg");
+        Image sun = loadImage("/Sun.png");
 
+        GamePanel() {
+            setPreferredSize(new Dimension(panW, panH));
+        }
+
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
+
+            // g2.setFont(new Font("Arial", Font.BOLD, 30));
+            // g2.drawString("the sun amount" + AmountSun, 20, 20);
+
+            g2.drawImage(gameBackground, 0, 0, getWidth(), getHeight(), null);
+            g2.drawImage(sun, 496, 22, 60, 60, this);
+
+        }
     }
 
     /**
@@ -118,5 +143,30 @@ public class pvp implements ActionListener {
                     JOptionPane.ERROR_MESSAGE);
         }
         return image;
+    }
+
+    public static void playMusic(String filepath) {
+        try {
+            File musicPath = new File(filepath);
+            if (musicPath.exists()) {
+                AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicPath);
+                Clip newclip = AudioSystem.getClip();
+                newclip.open(audioInput);
+
+                if (clip != null && clip.isRunning()) {
+                    clip.stop();
+                    clip.close();
+                }
+
+                clip = newclip;
+
+                // Start playing the new clip
+                clip.start();
+                clip.loop(clip.LOOP_CONTINUOUSLY);
+            }
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(null, "Error");
+        }
     }
 }
