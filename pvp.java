@@ -7,6 +7,12 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.awt.image.BufferedImage;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 /*
  * 
@@ -35,7 +41,7 @@ public class pvp implements ActionListener {
     Timer timer; 
     Sun sunObj;
     boolean isFalling = false;
-    int sunCount = 0;
+    int sunCount = 10000;
     int mx=-100, my=-100;
     long frameCtr=0;
     //-1 is no plant
@@ -46,15 +52,23 @@ public class pvp implements ActionListener {
     Image peashooterCardImg = loadImage("/peashooterCard.png");
     Rectangle walnutCard = new Rectangle(160, 20, 100, 50);
     Image walnutCardImg = loadImage("/walnutCard.png");
-    ArrayList<Plant> plants = new ArrayList();
-    ArrayList<Zombie> zombies = new ArrayList();
+    ArrayList<Plant> plants = new ArrayList <Plant> ();
+    ArrayList<Zombie> zombies = new ArrayList <Zombie>();
     int spawnZombieCtr=0;
     boolean hasPlant[][] = new boolean[9][5];
+    boolean hasZombie[] = new boolean[5];
+    int shootCtr=0;
+    static Clip clip;
+    
+    // Create the Projectile arraylist: 
+    ArrayList <Projectile> projectiles = new ArrayList<Projectile>();
     
     void spawnZombie() {
-    	int rand = (int)(Math.random()*5);
-    	int zombieY = rand*89+124;
-    	zombies.add(new NormalZombie(100, 1000, zombieY, 10, 10, 3, "/Zombies.png"));
+    	if (!checkEndGame()){
+            int rand = (int)(Math.random()*5);
+            int zombieY = rand*89+124;
+            zombies.add(new NormalZombie(100, 1000, zombieY, 10, 10, 3, "/Zombies.png"));
+        }
     }
     
     private class MouseHandler extends MouseAdapter{
@@ -65,10 +79,10 @@ public class pvp implements ActionListener {
                 respawnSun();
             }
             else {
-            	if(peashooterCard.contains(e.getPoint())) {
+            	if(sunCount>=100&&peashooterCard.contains(e.getPoint())) {
             		chosenPlant=0;
             	}
-            	else if(walnutCard.contains(e.getPoint())) {
+            	else if(sunCount>=50&&walnutCard.contains(e.getPoint())) {
             		chosenPlant=1;
             	}
             	else {
@@ -79,17 +93,20 @@ public class pvp implements ActionListener {
             		if(mx>=0&&my>=0) {
             			mx=mx/66;
             			my=my/89;
-            			if(mx<9&&my<5&&!hasPlant[mx][my]&&chosenPlant!=-1) {
+            			if(chosenPlant!=-1&&mx<9&&my<5&&!hasPlant[mx][my]) {
             				hasPlant[mx][my]=true;
+            				//System.out.println(mx + " " + my);
             				mx*=66;
             				my*=89;
             				if(chosenPlant==0) {
-            					plants.add(new Peashooter(100, mx+2+311, my+2+124, 10, 10, "/Peashooter.png", "Peashooter"));
-            					chosenPlant=-1;
+            					plants.add(new Peashooter(1000, mx+2+311, my+2+124, 10, 10, "/Peashooter.png", "Peashooter"));
+                                chosenPlant=-1;
+                                sunCount-=100;
             				}
             				else if(chosenPlant==1){
-            					plants.add(new Walnut(100, mx+2+311, my+2+124, 10, 10, "/Walnut.png", "Walnut"));
+            					plants.add(new Walnut(10000, mx+2+311, my+2+124, 10, 10, "/Walnut.png", "Walnut"));
             					chosenPlant=-1;
+            					sunCount-=50;
             				}
             			}
             		}
@@ -125,6 +142,12 @@ public class pvp implements ActionListener {
         return sunObj.y > frame.getHeight();
     }
     
+    public void resetZombieArray() {
+    	for(int i = 0; i < 5; i++) {
+    		hasZombie[i]=false;
+    	}
+    }
+    
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -137,9 +160,13 @@ public class pvp implements ActionListener {
         frame = new JFrame();
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
+        EndPanel endpanel;
+        JPanel mainPanel;
+        IntroPanel introPanel;
+        GamePanel gamepanel;
         mainPanel = new JPanel();
         cardLayout = new CardLayout();
+        playMusic("soundRes/Crazy_Dave.wav");
         mainPanel.setLayout(cardLayout);
         
         sun = loadImage("/SunImg.png");
@@ -148,8 +175,8 @@ public class pvp implements ActionListener {
         	for(int j = 0; j < 5; j++) {
         		hasPlant[i][j]=false;
         	}
-        }
-        
+        }  
+
         timer = new Timer(5, new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e){
@@ -165,6 +192,43 @@ public class pvp implements ActionListener {
                 if (checkBoundaries() == true){
                     respawnSun();
                 }
+
+                for (int i = projectiles.size()-1; i >= 0; i--){
+                    Projectile p = projectiles.get(i);
+                    // Check if the projectile is out of bounds
+                    if (p.getX() > frame.getWidth()){
+                        projectiles.remove(p);
+                        break;
+                    }
+                    // Check if the projectile hits a zombie
+                    for (int j = zombies.size()-1; j >= 0; j--){
+                        Zombie z = zombies.get(j);
+                        if (isOverlapping(p.getBounds(), z.getBounds())){
+                            z.reduceHealth(p.getDamage());
+                            projectiles.remove(p);
+                            break;
+                        }
+                    }
+                }
+                for(int i = zombies.size()-1; i>=0; i--) {
+                	Zombie z = zombies.get(i);
+                	if(z.getHealth()<0)zombies.remove(i);
+                }
+                for(int i = plants.size()-1; i>=0; i--) {
+                	Plant p = plants.get(i);
+                	if(p.getHealth()<0) {
+                		hasPlant[(p.getX()-313)/66][(p.getY()-126)/89]=false;
+                		plants.remove(i);
+                	}
+                }
+                if (checkEndGame()){
+                    cardLayout.show(mainPanel, "end");
+                }
+                // Move the projectiles
+                for (Projectile p : projectiles){
+                    p.move();
+                }
+
                 mainPanel.repaint();
             }
         });
@@ -204,7 +268,6 @@ public class pvp implements ActionListener {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.drawImage(gameBackground, 0, 0, getWidth(), getHeight(), null);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                sunObj.draw(g2, sun);
                 g2.setPaint(Color.BLACK);
                 g2.setFont(new Font("Monospaced", Font.BOLD, 20));
                 int sunCountDigit = Integer.toString(sunCount).length();
@@ -216,6 +279,9 @@ public class pvp implements ActionListener {
                 for(Plant p : plants) {
                 	if(p.getType().equals("Peashooter")) {
                 		Peashooter ps = (Peashooter)p;
+                		if(ps.getShootCtr()%3!=0) {
+                			ps.setAttack(false);
+                		}
                 		g.drawImage(ps.getimg(),							
             					ps.getX()+ps.getAdjustment(), ps.getY()+20, ps.getX()+60+ps.getAdjustment(), ps.getY() + 60,  //destination
             					ps.getImgX(), ps.getImgY(), ps.getImgX()+ps.getW(), ps.getImgY()+ps.getH(),						
@@ -233,6 +299,39 @@ public class pvp implements ActionListener {
                 		frameCtr=0;
                 	}
                 }
+                resetZombieArray();
+                for(Zombie z : zombies) {
+                	int posY = (z.getY()-124)/89;
+                	if(z.getX()<1000) {
+                		hasZombie[posY]=true;
+                	}
+                }
+                for(Plant p : plants) {
+                	if(p.getType().equals("Peashooter")) {
+	                	Peashooter ps = (Peashooter)p;
+	                	int posY=(ps.getY()-126)/89;
+	                	if(hasZombie[posY]) {
+	                		ps.setAttack(true);
+	                	}
+	                	else {
+	                		ps.setAttack(false);
+	                	}
+                	}
+                }
+                // Checks if the plant is attacking or not
+                for (Plant p : plants){
+                    if (p.getType().equals("Peashooter")){
+                        Peashooter ps = (Peashooter)p;
+                        if (ps.getIsAttacking() == true&&p.getFrame()==0&&frameCtr==1){
+                        	if(ps.getShootCtr()%3==0) {
+                            // Create a new projectile
+                        		projectiles.add(new Projectile(10, ps.getX()+ps.getAdjustment()+60, ps.getY()+20, 5));
+                        		ps.setShootCtr(0);
+                        	}
+                        	ps.setShootCtr(ps.getShootCtr()+1);
+                        }
+                    }
+                }  
                 if(spawnZombieCtr%10==0) {
                 	for(Zombie z : zombies) {
                 		z.incrementFrame();
@@ -249,19 +348,56 @@ public class pvp implements ActionListener {
             	}
                 for(Zombie z : zombies) {
                 	NormalZombie nz = (NormalZombie)z;
+                	int posX=(nz.getX()-311)/66, posY=(nz.getY()-124)/89;
+                	if(posX>=0&&posY>=0&&posX<9&&posY<5&&hasPlant[posX][posY]) {
+                		nz.setMove(false);
+                		nz.setMovementSpeed(0);
+                		//System.out.println(posX+" "+posY);
+                		for(Plant p : plants) {
+                			if((p.getX()-313)/66==posX&&(p.getY()-126)/89==posY) {
+                				//System.out.println("!");
+                				p.reduceHealth(nz.getDamage());
+                			}
+                		}
+                	}
+                	else{
+                		nz.setMovementSpeed(3);
+                		nz.setMove(true);
+                	}
                 	g.drawImage(nz.getimg(),							
         					nz.getX(), nz.getY(), nz.getX()+50, nz.getY()+80,  //destination
         					nz.getImgX(), nz.getImgY(), nz.getImgX()+nz.getW(), nz.getImgY()+nz.getH(),						
         					null);
                 }
+
+                // Draw the projectiles
+                for (Projectile p : projectiles){
+                    g.drawImage(p.getimg(), p.getX(), p.getY(), null);
+                }
+                sunObj.draw(g2, sun);
             }
         };
 
         mainPanel.add(gamepanel, "game");
+        
+        //Image endBackground = loadImage("/EndImage.png");
+        endpanel = new EndPanel(){
+            @Override
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D)g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                //g2.drawImage(endBackground, 0, 0, getWidth(), getHeight(), null);
+            }
+        };
+        endpanel.setLayout(new BoxLayout(endpanel, BoxLayout.PAGE_AXIS));
+        endpanel.setBorder(BorderFactory.createEmptyBorder(500, 10, 100, 10));
+        mainPanel.add(endpanel, "end");
 
         startgame.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(mainPanel, "game");
+                playMusic("soundRes/Grasswalk.wav");
             }
         });
         frame.add(mainPanel);
@@ -284,6 +420,10 @@ public class pvp implements ActionListener {
     class GamePanel extends JPanel {
 
     }
+    
+    class EndPanel extends JPanel {
+
+    }
 
     /**
      * Loads an image
@@ -302,4 +442,41 @@ public class pvp implements ActionListener {
 		}
 		return image;
 	}
+
+    public boolean isOverlapping(Rectangle rect1, Rectangle rect2) {
+        return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
+    }
+    public static void playMusic(String filepath) {
+        try {
+            File musicPath = new File(filepath);
+            if (musicPath.exists()) {
+                AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicPath);
+                Clip newclip = AudioSystem.getClip();
+                newclip.open(audioInput);
+
+                if (clip != null && clip.isRunning()) {
+                    clip.stop();
+                    clip.close();
+                }
+
+                clip = newclip;
+
+                // Start playing the new clip
+                clip.start();
+                clip.loop(clip.LOOP_CONTINUOUSLY);
+            }
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(null, "Error");
+        }
+    }
+
+    public boolean checkEndGame(){
+        for (Zombie z : zombies){
+            if (z.getX() < 250){
+                return true;
+            }
+        }
+        return false;
+    }
 }

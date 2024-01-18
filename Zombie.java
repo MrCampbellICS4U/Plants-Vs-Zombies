@@ -1,8 +1,8 @@
 package PlantsVsZombies;
 
 import java.awt.Image;
-
-public class Zombie {
+import java.awt.Rectangle;
+public class Zombie{
 	private int health;
 	private int posX;
 	private int posY;
@@ -10,6 +10,8 @@ public class Zombie {
 	private int damage;
 	private int frame=0;
 	private int movementSpeed;
+
+	// Make a hit box around the zombie
 	public Zombie(int h, int x, int y, int as, int dmg, int ms) {
 		health=h;
 		posX=x;
@@ -18,6 +20,15 @@ public class Zombie {
 		damage=dmg;
 		movementSpeed=ms;
 	}
+
+	/**
+	 * Returns the bounds of the zombie
+	 * @return
+	 */
+	public Rectangle getBounds() {
+		return new Rectangle(posX, posY, 100, 100);
+	}
+
 	public int getHealth() {
 		return health;
 	}
@@ -53,5 +64,8 @@ public class Zombie {
 	}
 	public void move() {
 		posX-=movementSpeed;
+	}
+	public void setMovementSpeed(int ms) {
+		movementSpeed=ms;
 	}
 }

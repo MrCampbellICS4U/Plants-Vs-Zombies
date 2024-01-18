@@ -42,10 +42,10 @@ public class Walnut extends Plant {
 		return f*70+3;
 	}
 	public int getImgY() {
-		if(getHealth()<33) {
+		if(getHealth()<3333) {
 			return 164;
 		}
-		else if(getHealth()<66) {
+		else if(getHealth()<6666) {
 			return 82;
 		}
 		else {

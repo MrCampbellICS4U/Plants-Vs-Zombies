@@ -10,6 +10,7 @@ public class Peashooter extends Plant {
 	private String filename;
 	private Image img;
 	private boolean isAttacking = false;
+	private int shootCtr=0;
 	
 	
 	public Peashooter(int h, int x, int y, int as, int dmg, String f, String t) {
@@ -108,5 +109,11 @@ public class Peashooter extends Plant {
 	public int getH() {
 		return 77;
 	}
-
+	
+	public int getShootCtr() {
+		return shootCtr;
+	}
+	public void setShootCtr(int a) {
+		shootCtr=a;
+	}
 }
