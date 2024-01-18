@@ -1,13 +1,18 @@
 // package PlantsVsZombies;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.awt.image.BufferedImage;
-
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 /*
  * 
  * 22.5x14.5
@@ -27,10 +32,13 @@ import java.awt.image.BufferedImage;
 public class pvp implements ActionListener {
     JFrame frame;
     static int panW = 1000, panH = 650;
+
     JPanel mainPanel;
     IntroPanel introPanel;
     GamePanel gamepanel;
+    EndPanel endpanel;
     CardLayout cardLayout;
+
     Image sun; 
     Timer timer; 
     Sun sunObj;
@@ -54,10 +62,14 @@ public class pvp implements ActionListener {
     // Create the Projectile arraylist: 
     ArrayList <Projectile> projectiles = new ArrayList<Projectile>();
     
+    // Music:
+    static Clip clip;
     void spawnZombie() {
-    	int rand = (int)(Math.random()*5);
-    	int zombieY = rand*89+124;
-    	zombies.add(new NormalZombie(100, 1000, zombieY, 10, 10, 3, "ImagesFolder/Zombies.png"));
+        if (!checkEndGame()){
+            int rand = (int)(Math.random()*5);
+            int zombieY = rand*89+124;
+            zombies.add(new NormalZombie(100, 1000, zombieY, 10, 10, 3, "ImagesFolder/Zombies.png"));
+        }
     }
     
     private class MouseHandler extends MouseAdapter{
@@ -151,6 +163,8 @@ public class pvp implements ActionListener {
 
         mainPanel = new JPanel();
         cardLayout = new CardLayout();
+        
+        playMusic("soundRes/Crazy_Dave.wav");
         mainPanel.setLayout(cardLayout);
         
         sun = loadImage("ImagesFolder/SunImg.png");
@@ -205,6 +219,10 @@ public class pvp implements ActionListener {
                             break;
                         }
                     }
+                }  
+
+                if (checkEndGame()){
+                    cardLayout.show(mainPanel, "end");
                 }
 
                 // Move the projectiles
@@ -219,7 +237,6 @@ public class pvp implements ActionListener {
         timer.start();
         
         mainPanel.addMouseListener(new MouseHandler());
-        
         
         Image introBackground = loadImage("ImagesFolder/Main_Menu.png");
         introPanel = new IntroPanel() {
@@ -310,9 +327,25 @@ public class pvp implements ActionListener {
 
         mainPanel.add(gamepanel, "game");
 
+        Image endBackground = loadImage("ImagesFolder/EndImage.png");
+        endpanel = new EndPanel(){
+            @Override
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D)g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.drawImage(endBackground, 0, 0, getWidth(), getHeight(), null);
+            }
+        };
+        endpanel.setLayout(new BoxLayout(endpanel, BoxLayout.PAGE_AXIS));
+        endpanel.setBorder(BorderFactory.createEmptyBorder(500, 10, 100, 10));
+        mainPanel.add(endpanel, "end");
+
         startgame.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(mainPanel, "game");
+                playMusic("soundRes/Grasswalk.wav");
             }
         });
         frame.add(mainPanel);
@@ -336,6 +369,10 @@ public class pvp implements ActionListener {
 
     }
 
+    class EndPanel extends JPanel {
+
+    }
+
     /**
      * Loads an image
      * 
@@ -356,5 +393,39 @@ public class pvp implements ActionListener {
 
     public boolean isOverlapping(Rectangle rect1, Rectangle rect2) {
         return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
+    }
+
+    public static void playMusic(String filepath) {
+        try {
+            File musicPath = new File(filepath);
+            if (musicPath.exists()) {
+                AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicPath);
+                Clip newclip = AudioSystem.getClip();
+                newclip.open(audioInput);
+
+                if (clip != null && clip.isRunning()) {
+                    clip.stop();
+                    clip.close();
+                }
+
+                clip = newclip;
+
+                // Start playing the new clip
+                clip.start();
+                clip.loop(clip.LOOP_CONTINUOUSLY);
+            }
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(null, "Error");
+        }
+    }
+
+    public boolean checkEndGame(){
+        for (Zombie z : zombies){
+            if (z.getX() < 950){
+                return true;
+            }
+        }
+        return false;
     }
 }
