@@ -59,6 +59,8 @@ public class pvp implements ActionListener {
     boolean hasZombie[] = new boolean[5];
     int shootCtr=0;
     static Clip clip;
+    int[] waves = {2, 3, 4, 5, 10, 12, 15, 5, 3, 2};
+    int zombieWaveCtr=0;
     
     // Create the Projectile arraylist: 
     ArrayList <Projectile> projectiles = new ArrayList<Projectile>();
@@ -67,7 +69,7 @@ public class pvp implements ActionListener {
     	if (!checkEndGame()){
             int rand = (int)(Math.random()*5);
             int zombieY = rand*89+124;
-            zombies.add(new NormalZombie(100, 1000, zombieY, 10, 10, 3, "/Zombies.png"));
+            zombies.add(new NormalZombie(50, 1000, zombieY, 10, 10, 3, "/Zombies.png"));
         }
     }
     
@@ -169,6 +171,11 @@ public class pvp implements ActionListener {
         playMusic("soundRes/Crazy_Dave.wav");
         mainPanel.setLayout(cardLayout);
         
+        for(int i = 0; i < waves[zombieWaveCtr]; i++) {
+        	spawnZombie();
+        }
+        zombieWaveCtr++;
+        
         sun = loadImage("/SunImg.png");
         sunObj = new Sun(frame.getWidth()/2, -55, 50, 50);
         for(int i = 0; i < 9; i++) {
@@ -227,6 +234,19 @@ public class pvp implements ActionListener {
                 // Move the projectiles
                 for (Projectile p : projectiles){
                     p.move();
+                }
+                
+                if(zombies.size()==0) {
+                	if(zombieWaveCtr==7) {
+                		System.out.println("Game Won");
+                		//load winning screen;
+                	}
+                	else {
+                		for(int i = 0; i < waves[zombieWaveCtr]; i++) {
+                			spawnZombie();
+                		}
+                		zombieWaveCtr++;
+                	}
                 }
 
                 mainPanel.repaint();
@@ -341,11 +361,8 @@ public class pvp implements ActionListener {
                 	for(Zombie z : zombies) {
                 		z.move();
                 	}
+                	spawnZombieCtr=0;
                 }
-                if(spawnZombieCtr%200==0) {
-            		spawnZombie();
-            		spawnZombieCtr=0;
-            	}
                 for(Zombie z : zombies) {
                 	NormalZombie nz = (NormalZombie)z;
                 	int posX=(nz.getX()-311)/66, posY=(nz.getY()-124)/89;
