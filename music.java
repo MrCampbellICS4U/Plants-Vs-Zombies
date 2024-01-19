@@ -1,50 +1,87 @@
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-
-import javax.sound.sampled.LineEvent;
-import javax.sound.sampled.LineListener;
-
+import java.util.ArrayList;
+import java.awt.image.BufferedImage;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
-import java.awt.image.BufferedImage;
+static Clip clip;
+static Clip backgroundMusic;
+static Clip plantSound1;
+static Clip plantSound2;
+static Clip peashooter;
+static Clip wavemusic;
+static Clip endmusic;
 
-public class music {
-    static Clip clip;
 
-    public static void main(String[] args) {
-        playMusic("soundRes/Crazy_Dave.wav");
+playMusic("soundRes/Crazy_Dave.wav", true);
 
-        playMusic("soundRes/Grasswalk.wav"); // put under button actionlistener
 
-    }
+playMusic("soundRes/Grasswalk.wav", true);
 
-    public static void playMusic(String filepath) {
-        try {
-            File musicPath = new File(filepath);
-            if (musicPath.exists()) {
-                AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicPath);
-                Clip newclip = AudioSystem.getClip();
-                newclip.open(audioInput);
 
-                if (clip != null && clip.isRunning()) {
-                    clip.stop();
-                    clip.close();
-                }
+playMusic("soundRes/plant.wav", false);
+playMusic("soundRes/plant2.wav", false);
 
-                clip = newclip;
+playMusic("soundRes/losemusic.wav", false);
+playMusic("soundRes/winmusic.wav", false);
+playMusic("soundRes/siren.wav", false);
 
-                // Start playing the new clip
-                clip.start();
-                clip.loop(clip.LOOP_CONTINUOUSLY);
+
+public static Clip playMusic(String filepath, boolean loop) {
+    try {
+        File musicPath = new File(filepath);
+        if (musicPath.exists()) {
+            AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicPath);
+            Clip newclip = AudioSystem.getClip();
+            newclip.open(audioInput);
+            if (clip != null && clip.isRunning()) {
+                clip.stop();
+                clip.close();
             }
-        } catch (Exception e) {
 
-            JOptionPane.showMessageDialog(null, "Error");
+            if (filepath.equals("soundRes/Grasswalk.wav") && backgroundMusic.isRunning()) {
+                backgroundMusic.stop();
+                backgroundMusic.close();
+            }
+
+            if (filepath.equals("soundRes/Grasswalk.wav")) {
+                backgroundMusic = newclip;
+            } else if (filepath.equals("soundRes/Crazy_Dave.wav")) {
+                backgroundMusic = newclip;
+            } 
+            else if (filepath.equals("soundRes/losemusic.wav")) {
+                losemusic = newclip;
+            } 
+            else if (filepath.equals("soundRes/winmusic.wav")) {
+                winmusic = newclip;
+            } 
+            else if(filepath.equals("soundRes/siren.wav")){
+                wavemusic = newclip;
+            }
+            else if (filepath.equals("soundRes/plant.wav")) {
+                plantSound1 = newclip;
+            } else if (filepath.equals("soundRes/plant2.wav")) {
+                plantSound2 = newclip;
+            }
+
+            // Start playing the new clip
+            if (loop) {
+                newclip.loop(Clip.LOOP_CONTINUOUSLY);
+            } else {
+                newclip.start();
+            }
         }
+    } catch (Exception e) {
+
+        System.out.println(JOptionPane.ERROR_MESSAGE);
     }
+    return clip;
 }
