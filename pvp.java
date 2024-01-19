@@ -1,18 +1,31 @@
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-
-import javax.sound.sampled.LineEvent;
-import javax.sound.sampled.LineListener;
-
+import java.util.ArrayList;
+import java.awt.image.BufferedImage;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
-import java.awt.image.BufferedImage;
+/*
+ * 
+ * 22.5x14.5
+ * 
+ * 1000x650
+ * 
+ * 44.5
+ * 
+ * 311, 124
+ * 
+ * width: 66
+ * height: 89
+ * 
+ */
 
 // The main class that runs the game
 public class pvp implements ActionListener {
@@ -22,9 +35,131 @@ public class pvp implements ActionListener {
     IntroPanel introPanel;
     GamePanel gamepanel;
     CardLayout cardLayout;
+    Image sun;
     Timer timer;
+    Sun sunObj;
+    boolean isFalling = false;
+    int sunCount = 10000;
+    int mx = -100, my = -100;
+    long frameCtr = 0;
+    // -1 is no plant
+    // 0 is peashooter
+    // 1 is walnut
+    int chosenPlant = -1;
+    Rectangle peashooterCard = new Rectangle(40, 20, 100, 50);
+    Image peashooterCardImg = loadImage("/peashooterCard.png");
+    Rectangle walnutCard = new Rectangle(160, 20, 100, 50);
+    Image walnutCardImg = loadImage("/walnutCard.png");
+    ArrayList<Plant> plants = new ArrayList<Plant>();
+    ArrayList<Zombie> zombies = new ArrayList<Zombie>();
+    int spawnZombieCtr = 0;
+    boolean hasPlant[][] = new boolean[9][5];
+    boolean hasZombie[] = new boolean[5];
+    int shootCtr = 0;
+    int[] waves = { 2, 3, 4, 5, 10, 12, 15 };
+    int zombieWaveCtr = 0;
+    boolean wavePlaying = true;
+    int waveFrameCtr = 0;
 
+    // music
     static Clip clip;
+    static Clip backgroundMusic;
+    static Clip plantSound1;
+    static Clip plantSound2;
+    static Clip peashooter;
+    static Clip wavemusic;
+    static Clip endmusic;
+
+    // Create the Projectile arraylist:
+    ArrayList<Projectile> projectiles = new ArrayList<Projectile>();
+
+    void spawnZombie() {
+        if (!checkEndGame()) {
+            int rand = (int) (Math.random() * 5);
+            int zombieY = rand * 89 + 124;
+            zombies.add(new NormalZombie(50, 1000, zombieY, 10, 5, 100, "/Zombies.png"));
+        }
+    }
+
+    private class MouseHandler extends MouseAdapter {
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (sunObj.contains(e.getPoint())) {
+                sunCount += 25;
+                respawnSun();
+            } else {
+                if (sunCount >= 100 && peashooterCard.contains(e.getPoint())) {
+                    chosenPlant = 0;
+                } else if (sunCount >= 50 && walnutCard.contains(e.getPoint())) {
+                    chosenPlant = 1;
+                } else {
+                    mx = e.getX();
+                    my = e.getY();
+                    mx -= 311;
+                    my -= 124;
+                    if (mx >= 0 && my >= 0) {
+                        mx = mx / 66;
+                        my = my / 89;
+                        if (chosenPlant != -1 && mx < 9 && my < 5 && !hasPlant[mx][my]) {
+                            hasPlant[mx][my] = true;
+                            // System.out.println(mx + " " + my);
+                            mx *= 66;
+                            my *= 89;
+                            if (chosenPlant == 0) {
+                                plants.add(new Peashooter(1000, mx + 2 + 311, my + 2 + 124, 10, 10, "/Peashooter.png",
+                                        "Peashooter"));
+                                playMusic("soundRes/plant.wav", false);
+                                chosenPlant = -1;
+                                sunCount -= 100;
+                            } else if (chosenPlant == 1) {
+                                plants.add(
+                                        new Walnut(10000, mx + 2 + 311, my + 2 + 124, 10, 10, "/Walnut.png", "Walnut"));
+
+                                playMusic("soundRes/plant2.wav", false);
+                                chosenPlant = -1;
+                                sunCount -= 50;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Respawns the sun at the top of the screen
+     */
+    public void respawnSun() {
+        isFalling = false;
+        sunObj.setYY(-55);
+        sunObj.y = (int) sunObj.getYY();
+        sunObj.x = (int) (Math.random() * (frame.getWidth() - 50));
+    }
+
+    /**
+     * Checks if the sun should fall or not
+     * 
+     * @return true if the sun should fall, false otherwise
+     */
+    public boolean checkFall() {
+        int rand = (int) (Math.random() * 500);
+        return rand == 0;
+    }
+
+    /**
+     * Checks if the sun is out of bounds
+     * 
+     * @return true if the sun is out of bounds, false otherwise
+     */
+    public boolean checkBoundaries() {
+        return sunObj.y > frame.getHeight();
+    }
+
+    public void resetZombieArray() {
+        for (int i = 0; i < 5; i++) {
+            hasZombie[i] = false;
+        }
+    }
 
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -38,19 +173,117 @@ public class pvp implements ActionListener {
         frame = new JFrame();
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
+        EndPanel endpanel;
+        JPanel mainPanel;
+        IntroPanel introPanel;
+        GamePanel gamepanel;
         mainPanel = new JPanel();
         cardLayout = new CardLayout();
+        playMusic("soundRes/Crazy_Dave.wav");
         mainPanel.setLayout(cardLayout);
 
-        introPanel = new IntroPanel();
+        for (int i = 0; i < waves[zombieWaveCtr]; i++) {
+            spawnZombie();
+            playMusic("soundRes/siren.wav", false);
+        }
+        zombieWaveCtr++;
+
+        sun = loadImage("/SunImg.png");
+        sunObj = new Sun(frame.getWidth() / 2, -55, 50, 50);
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 5; j++) {
+                hasPlant[i][j] = false;
+            }
+        }
+
+        timer = new Timer(5, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Check if the sun should fall or not
+                if (checkFall() == true) {
+                    isFalling = true;
+                }
+                // If the sun is falling, move it down
+                if (isFalling == true) {
+                    sunObj.move();
+                }
+                // If the sun is out of bounds, respawn it
+                if (checkBoundaries() == true) {
+                    respawnSun();
+                }
+
+                for (int i = projectiles.size() - 1; i >= 0; i--) {
+                    Projectile p = projectiles.get(i);
+                    // Check if the projectile is out of bounds
+                    if (p.getX() > frame.getWidth()) {
+                        projectiles.remove(p);
+                        break;
+                    }
+                    // Check if the projectile hits a zombie
+                    for (int j = zombies.size() - 1; j >= 0; j--) {
+                        Zombie z = zombies.get(j);
+                        if (isOverlapping(p.getBounds(), z.getBounds())) {
+                            z.reduceHealth(p.getDamage());
+                            projectiles.remove(p);
+                            break;
+                        }
+                    }
+                }
+                for (int i = zombies.size() - 1; i >= 0; i--) {
+                    Zombie z = zombies.get(i);
+                    if (z.getHealth() < 0)
+                        zombies.remove(i);
+                }
+                for (int i = plants.size() - 1; i >= 0; i--) {
+                    Plant p = plants.get(i);
+                    if (p.getHealth() < 0) {
+                        hasPlant[(p.getX() - 313) / 66][(p.getY() - 126) / 89] = false;
+                        plants.remove(i);
+                    }
+                }
+                if (checkEndGame()) {
+                    cardLayout.show(mainPanel, "end");
+                    playMusic("soundRes/losemusic.wav", false);
+                }
+                // Move the projectiles
+                for (Projectile p : projectiles) {
+                    p.move();
+                }
+
+                if (zombies.size() == 0) {
+                    if (zombieWaveCtr == 7) {
+                        // load winning screen;
+                        playMusic("soundRes/winmusic.wav", false);
+                    } else {
+                        for (int i = 0; i < waves[zombieWaveCtr]; i++) {
+                            spawnZombie();
+                        }
+                        wavePlaying = true;
+                        zombieWaveCtr++;
+                    }
+                }
+
+                mainPanel.repaint();
+            }
+        });
+
+        timer.start();
+
+        mainPanel.addMouseListener(new MouseHandler());
+
+        Image introBackground = loadImage("/Main_Menu.png");
+        introPanel = new IntroPanel() {
+            @Override
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.drawImage(introBackground, 0, 0, getWidth(), getHeight(), null);
+            }
+        };
         introPanel.setLayout(new BoxLayout(introPanel, BoxLayout.PAGE_AXIS));
         introPanel.setBorder(BorderFactory.createEmptyBorder(500, 10, 100, 10));
 
-        playMusic("soundRes/Crazy_Dave.wav");
-
         JButton startgame = new JButton("START GAME");
-        startgame.setBackground(new Color(178, 210, 53, 255));
         startgame.setFont(new Font("Condensed Bold", Font.BOLD, 20));
         startgame.setAlignmentX(0.5f);
         Dimension size = new Dimension(175, 90);
@@ -60,28 +293,165 @@ public class pvp implements ActionListener {
 
         mainPanel.add(introPanel, "intro");
 
-        gamepanel = new GamePanel();
+        Image gameBackground = loadImage("/Background.jpg");
+        gamepanel = new GamePanel() {
+            @Override
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.drawImage(gameBackground, 0, 0, getWidth(), getHeight(), null);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setPaint(Color.BLACK);
+                g2.setFont(new Font("Monospaced", Font.BOLD, 20));
+                int sunCountDigit = Integer.toString(sunCount).length();
+                g2.drawString(Integer.toString(sunCount), 520 - (sunCountDigit - 1) * 5, 118);
+                g2.drawImage(peashooterCardImg, peashooterCard.x, peashooterCard.y, peashooterCard.width,
+                        peashooterCard.height, null);
+                g2.drawImage(walnutCardImg, walnutCard.x, walnutCard.y, walnutCard.width, walnutCard.height, null);
+                frameCtr++;
+                spawnZombieCtr++;
+                for (Plant p : plants) {
+                    if (p.getType().equals("Peashooter")) {
+                        Peashooter ps = (Peashooter) p;
+                        if (ps.getShootCtr() % 3 != 0) {
+                            ps.setAttack(false);
+                        }
+                        g.drawImage(ps.getimg(),
+                                ps.getX() + ps.getAdjustment(), ps.getY() + 20, ps.getX() + 60 + ps.getAdjustment(),
+                                ps.getY() + 60, // destination
+                                ps.getImgX(), ps.getImgY(), ps.getImgX() + ps.getW(), ps.getImgY() + ps.getH(),
+                                null);
+                    } else if (p.getType().equals("Walnut")) {
+                        Walnut w = (Walnut) p;
+                        g.drawImage(w.getimg(),
+                                w.getX() + w.getAdjustment(), w.getY() + 20, w.getX() + 60 + w.getAdjustment(),
+                                w.getY() + 60, // destination
+                                w.getImgX(), w.getImgY(), w.getImgX() + w.getW(), w.getImgY() + w.getH(),
+                                null);
+                    }
+                    if (frameCtr % 20 == 0) {
+                        p.incrementFrame();
+                        frameCtr = 0;
+                    }
+                }
+                resetZombieArray();
+                for (Zombie z : zombies) {
+                    int posY = (z.getY() - 124) / 89;
+                    if (z.getX() < 1000) {
+                        hasZombie[posY] = true;
+                    }
+                }
+                for (Plant p : plants) {
+                    if (p.getType().equals("Peashooter")) {
+                        Peashooter ps = (Peashooter) p;
+                        int posY = (ps.getY() - 126) / 89;
+                        if (hasZombie[posY]) {
+                            ps.setAttack(true);
+                        } else {
+                            ps.setAttack(false);
+                        }
+                    }
+                }
+                // Checks if the plant is attacking or not
+                for (Plant p : plants) {
+                    if (p.getType().equals("Peashooter")) {
+                        Peashooter ps = (Peashooter) p;
+                        if (ps.getIsAttacking() == true && p.getFrame() == 0 && frameCtr == 1) {
+                            if (ps.getShootCtr() % 3 == 0) {
+                                // Create a new projectile
+                                projectiles.add(
+                                        new Projectile(10, ps.getX() + ps.getAdjustment() + 60, ps.getY() + 20, 5));
+                                ps.setShootCtr(0);
+                            }
+                            ps.setShootCtr(ps.getShootCtr() + 1);
+                        }
+                    }
+                }
+                if (spawnZombieCtr % 10 == 0) {
+                    for (Zombie z : zombies) {
+                        z.incrementFrame();
+                    }
+                }
+                if (spawnZombieCtr % 40 == 0) {
+                    for (Zombie z : zombies) {
+                        // System.out.println(z.getX());
+                        z.move();
+                    }
+                    spawnZombieCtr = 0;
+                }
+                for (Zombie z : zombies) {
+                    NormalZombie nz = (NormalZombie) z;
+                    int posX = (nz.getX() - 311) / 66, posY = (nz.getY() - 124) / 89;
+                    if (posX >= 0 && posY >= 0 && posX < 9 && posY < 5 && hasPlant[posX][posY]) {
+                        nz.setMove(false);
+                        nz.setMovementSpeed(0);
+                        // System.out.println(posX+" "+posY);
+                        for (Plant p : plants) {
+                            if ((p.getX() - 313) / 66 == posX && (p.getY() - 126) / 89 == posY) {
+                                // System.out.println("!");
+                                p.reduceHealth(nz.getDamage());
+                            }
+                        }
+                    } else if (posX >= 0 && posY >= 0 && posX < 9 && posY < 5) {
+                        nz.setMove(true);
+                    } else {
+                        nz.setMovementSpeed((int) (Math.random() * 4 + 5));
+                        nz.setMove(true);
+                    }
+                    g.drawImage(nz.getimg(),
+                            nz.getX(), nz.getY(), nz.getX() + 50, nz.getY() + 80, // destination
+                            nz.getImgX(), nz.getImgY(), nz.getImgX() + nz.getW(), nz.getImgY() + nz.getH(),
+                            null);
+                }
+
+                // Draw the projectiles
+                for (Projectile p : projectiles) {
+                    g.drawImage(p.getimg(), p.getX(), p.getY(), null);
+                }
+                sunObj.draw(g2, sun);
+                if (wavePlaying) {
+                    if (waveFrameCtr < 100) {
+                        waveFrameCtr++;
+                        String waveFilePath = "/Wave" + Integer.toString(zombieWaveCtr) + ".png";
+                        Image waveImg = loadImage(waveFilePath);
+                        if (waveFrameCtr != 7) {
+                            g.drawImage(waveImg, 300, 200, 400, 200, null);
+                        } else {
+                            g.drawImage(waveImg, 100, 200, 900, 200, null);
+                        }
+                    } else {
+                        waveFrameCtr = 0;
+                        wavePlaying = false;
+                    }
+                }
+            }
+        };
 
         mainPanel.add(gamepanel, "game");
 
-        frame.add(mainPanel);
-        frame.pack();
-        frame.setVisible(true);
+        // Image endBackground = loadImage("/EndImage.png");
+        endpanel = new EndPanel() {
+            @Override
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // g2.drawImage(endBackground, 0, 0, getWidth(), getHeight(), null);
+            }
+        };
+        endpanel.setLayout(new BoxLayout(endpanel, BoxLayout.PAGE_AXIS));
+        endpanel.setBorder(BorderFactory.createEmptyBorder(500, 10, 100, 10));
+        mainPanel.add(endpanel, "end");
 
         startgame.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(mainPanel, "game");
                 playMusic("soundRes/Grasswalk.wav");
-
             }
         });
-
-        timer = new Timer(30, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-
-            }
-        });
-        timer.start();
+        frame.add(mainPanel);
+        frame.pack();
+        frame.setVisible(true);
     }
 
     @Override
@@ -91,39 +461,17 @@ public class pvp implements ActionListener {
     }
 
     class IntroPanel extends JPanel {
-        Image introBackground = loadImage("/Main_Menu.png");
-
         IntroPanel() {
             setPreferredSize(new Dimension(panW, panH));
         }
-
-        public void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g;
-            g2.drawImage(introBackground, 0, 0, getWidth(), getHeight(), null);
-        }
-
     }
 
     class GamePanel extends JPanel {
-        Image gameBackground = loadImage("/EMPTYLANW.jpg");
-        Image sun = loadImage("/Sun.png");
 
-        GamePanel() {
-            setPreferredSize(new Dimension(panW, panH));
-        }
+    }
 
-        public void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g;
+    class EndPanel extends JPanel {
 
-            // g2.setFont(new Font("Arial", Font.BOLD, 30));
-            // g2.drawString("the sun amount" + AmountSun, 20, 20);
-
-            g2.drawImage(gameBackground, 0, 0, getWidth(), getHeight(), null);
-            g2.drawImage(sun, 496, 22, 60, 60, this);
-
-        }
     }
 
     /**
@@ -145,28 +493,64 @@ public class pvp implements ActionListener {
         return image;
     }
 
-    public static void playMusic(String filepath) {
+    public boolean isOverlapping(Rectangle rect1, Rectangle rect2) {
+        return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height
+                && rect1.y + rect1.height > rect2.y;
+    }
+
+    public static Clip playMusic(String filepath, boolean loop) {
         try {
             File musicPath = new File(filepath);
             if (musicPath.exists()) {
                 AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicPath);
                 Clip newclip = AudioSystem.getClip();
                 newclip.open(audioInput);
-
                 if (clip != null && clip.isRunning()) {
                     clip.stop();
                     clip.close();
                 }
 
-                clip = newclip;
+                if (filepath.equals("soundRes/Grasswalk.wav") && backgroundMusic.isRunning()) {
+                    backgroundMusic.stop();
+                    backgroundMusic.close();
+                }
+
+                if (filepath.equals("soundRes/Grasswalk.wav")) {
+                    backgroundMusic = newclip;
+                } else if (filepath.equals("soundRes/Crazy_Dave.wav")) {
+                    backgroundMusic = newclip;
+                } else if (filepath.equals("soundRes/losemusic.wav")) {
+                    losemusic = newclip;
+                } else if (filepath.equals("soundRes/winmusic.wav")) {
+                    winmusic = newclip;
+                } else if (filepath.equals("soundRes/siren.wav")) {
+                    wavemusic = newclip;
+                } else if (filepath.equals("soundRes/plant.wav")) {
+                    plantSound1 = newclip;
+                } else if (filepath.equals("soundRes/plant2.wav")) {
+                    plantSound2 = newclip;
+                }
 
                 // Start playing the new clip
-                clip.start();
-                clip.loop(clip.LOOP_CONTINUOUSLY);
+                if (loop) {
+                    newclip.loop(Clip.LOOP_CONTINUOUSLY);
+                } else {
+                    newclip.start();
+                }
             }
         } catch (Exception e) {
 
-            JOptionPane.showMessageDialog(null, "Error");
+            System.out.println(JOptionPane.ERROR_MESSAGE);
         }
+        return clip;
+    }
+
+    public boolean checkEndGame() {
+        for (Zombie z : zombies) {
+            if (z.getX() < 250) {
+                return true;
+            }
+        }
+        return false;
     }
 }
