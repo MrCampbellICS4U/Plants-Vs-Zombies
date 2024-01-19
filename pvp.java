@@ -65,12 +65,19 @@ public class pvp implements ActionListener {
     // Music:
     static Clip clip;
     void spawnZombie() {
-        if (!checkEndGame()){
+        if (!checkLoss()){
             int rand = (int)(Math.random()*5);
             int zombieY = rand*89+124;
             zombies.add(new NormalZombie(100, 1000, zombieY, 10, 10, 3, "ImagesFolder/Zombies.png"));
         }
     }
+
+    // The Buttons:
+    ExitButton exitButton;
+    RetryButton retryButton;
+
+    // Boolean to check if you won or not
+    boolean won = false;
     
     private class MouseHandler extends MouseAdapter{
         @Override   
@@ -221,9 +228,10 @@ public class pvp implements ActionListener {
                     }
                 }  
 
-                if (checkEndGame()){
+                if (checkLoss()){
+                    won = false;
                     cardLayout.show(mainPanel, "end");
-                }
+                } 
 
                 // Move the projectiles
                 for (Projectile p : projectiles){
@@ -327,18 +335,8 @@ public class pvp implements ActionListener {
 
         mainPanel.add(gamepanel, "game");
 
-        Image endBackground = loadImage("ImagesFolder/EndImage.png");
-        endpanel = new EndPanel(){
-            @Override
-            public void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D)g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.drawImage(endBackground, 0, 0, getWidth(), getHeight(), null);
-            }
-        };
-        endpanel.setLayout(new BoxLayout(endpanel, BoxLayout.PAGE_AXIS));
-        endpanel.setBorder(BorderFactory.createEmptyBorder(500, 10, 100, 10));
+        endpanel = new EndPanel();
+        endpanel.addMouseListener(new EndPanelMouseHandler());
         mainPanel.add(endpanel, "end");
 
         startgame.addActionListener(new ActionListener() {
@@ -370,7 +368,26 @@ public class pvp implements ActionListener {
     }
 
     class EndPanel extends JPanel {
+        EndPanel() {
+            exitButton = new ExitButton(550, 500, 100, 50);
+            retryButton = new RetryButton(350, 500, 100, 50);
+        }
 
+        @Override  
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D)g;
+            if (won){
+                g2.drawImage(loadImage("ImagesFolder/WinningScreen.jpg"), 0, 0, getWidth(), getHeight(), null);
+                exitButton.x = 450;
+                exitButton.y = 575;
+                g2.drawImage(loadImage("ImagesFolder/ExitButton.png"), exitButton.x, exitButton.y, exitButton.width, exitButton.height, null);
+            } else{
+                g2.drawImage(loadImage("ImagesFolder/EndScreen.jpg"), 0, 0, getWidth(), getHeight(), null);
+                g2.drawImage(loadImage("ImagesFolder/ExitButton.png"), exitButton.x, exitButton.y, exitButton.width, exitButton.height, null);
+                g2.drawImage(loadImage("ImagesFolder/RetryButton.png"), retryButton.x, retryButton.y, retryButton.width, exitButton.height, null);
+            }
+        }
     }
 
     /**
@@ -420,12 +437,44 @@ public class pvp implements ActionListener {
         }
     }
 
-    public boolean checkEndGame(){
+    public boolean checkLoss(){
         for (Zombie z : zombies){
-            if (z.getX() < 950){
+            if (z.getX() < 275){
                 return true;
             }
         }
         return false;
+    }
+
+    private void resetGame(){
+        sunCount = 0;
+        respawnSun();
+        mx=-100;
+        my=-100;
+        frameCtr=0;
+        chosenPlant = -1;
+        plants.clear();
+        zombies.clear();
+        spawnZombieCtr=0;
+        for(int i = 0; i < 9; i++) {
+        	for(int j = 0; j < 5; j++) {
+        		hasPlant[i][j]=false;
+        	}
+        }
+        projectiles.clear();
+        cardLayout.show(mainPanel, "game");
+        playMusic("soundRes/Grasswalk.wav");
+    }
+
+    private class EndPanelMouseHandler extends MouseAdapter{
+        @Override   
+        public void mousePressed(MouseEvent e){
+            if (exitButton.contains(e.getPoint())){
+                System.exit(0);
+            }
+            else if (retryButton.contains(e.getPoint())){
+                resetGame();
+            }
+        }
     }
 }
