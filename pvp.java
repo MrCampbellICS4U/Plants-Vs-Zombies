@@ -59,8 +59,10 @@ public class pvp implements ActionListener {
     boolean hasZombie[] = new boolean[5];
     int shootCtr=0;
     static Clip clip;
-    int[] waves = {2, 3, 4, 5, 10, 12, 15, 5, 3, 2};
+    int[] waves = {2, 3, 4, 5, 10, 12, 15};
     int zombieWaveCtr=0;
+    boolean wavePlaying = true;
+    int waveFrameCtr=0;
     
     // Create the Projectile arraylist: 
     ArrayList <Projectile> projectiles = new ArrayList<Projectile>();
@@ -69,7 +71,7 @@ public class pvp implements ActionListener {
     	if (!checkEndGame()){
             int rand = (int)(Math.random()*5);
             int zombieY = rand*89+124;
-            zombies.add(new NormalZombie(50, 1000, zombieY, 10, 10, 3, "/Zombies.png"));
+            zombies.add(new NormalZombie(50, 1000, zombieY, 10, 5, 100, "/Zombies.png"));
         }
     }
     
@@ -238,13 +240,13 @@ public class pvp implements ActionListener {
                 
                 if(zombies.size()==0) {
                 	if(zombieWaveCtr==7) {
-                		System.out.println("Game Won");
                 		//load winning screen;
                 	}
                 	else {
                 		for(int i = 0; i < waves[zombieWaveCtr]; i++) {
                 			spawnZombie();
                 		}
+                		wavePlaying=true;
                 		zombieWaveCtr++;
                 	}
                 }
@@ -359,6 +361,7 @@ public class pvp implements ActionListener {
                 }
                 if(spawnZombieCtr%40==0) {
                 	for(Zombie z : zombies) {
+                		//System.out.println(z.getX());
                 		z.move();
                 	}
                 	spawnZombieCtr=0;
@@ -377,8 +380,11 @@ public class pvp implements ActionListener {
                 			}
                 		}
                 	}
+                	else if(posX>=0&&posY>=0&&posX<9&&posY<5) {
+                		nz.setMove(true);
+                	}
                 	else{
-                		nz.setMovementSpeed(3);
+                		nz.setMovementSpeed((int)(Math.random()*4+5));
                 		nz.setMove(true);
                 	}
                 	g.drawImage(nz.getimg(),							
@@ -392,6 +398,23 @@ public class pvp implements ActionListener {
                     g.drawImage(p.getimg(), p.getX(), p.getY(), null);
                 }
                 sunObj.draw(g2, sun);
+                if(wavePlaying) {
+                	if(waveFrameCtr<100) {
+                		waveFrameCtr++;
+                		String waveFilePath = "/Wave"+Integer.toString(zombieWaveCtr)+".png";
+                		Image waveImg = loadImage(waveFilePath);
+                		if(waveFrameCtr!=7) {
+                			g.drawImage(waveImg, 300, 200, 400, 200, null);
+                		}
+                		else {
+                			g.drawImage(waveImg, 100, 200, 900, 200, null);
+                		}
+                	}
+                	else {
+                		waveFrameCtr=0;
+                		wavePlaying=false;
+                	}
+                }
             }
         };
 

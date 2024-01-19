@@ -68,4 +68,7 @@ public class Zombie{
 	public void setMovementSpeed(int ms) {
 		movementSpeed=ms;
 	}
+	public int getMovementSpeed() {
+		return movementSpeed;
+	}
 }
