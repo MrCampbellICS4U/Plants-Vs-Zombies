@@ -75,6 +75,13 @@ public class pvp implements ActionListener {
         }
     }
     
+ // The Buttons:
+    ExitButton exitButton;
+    RetryButton retryButton;
+
+    // Boolean to check if you won or not
+    boolean won = false;
+    
     private class MouseHandler extends MouseAdapter{
         @Override   
         public void mousePressed(MouseEvent e){
@@ -219,6 +226,12 @@ public class pvp implements ActionListener {
                         }
                     }
                 }
+                
+                if(checkEndGame()) {
+                	won=false;
+                	cardLayout.show(mainPanel, "end");
+                }
+                
                 for(int i = zombies.size()-1; i>=0; i--) {
                 	Zombie z = zombies.get(i);
                 	if(z.getHealth()<0)zombies.remove(i);
@@ -229,9 +242,6 @@ public class pvp implements ActionListener {
                 		hasPlant[(p.getX()-313)/66][(p.getY()-126)/89]=false;
                 		plants.remove(i);
                 	}
-                }
-                if (checkEndGame()){
-                    cardLayout.show(mainPanel, "end");
                 }
                 // Move the projectiles
                 for (Projectile p : projectiles){
@@ -258,7 +268,8 @@ public class pvp implements ActionListener {
         timer.start();
         
         mainPanel.addMouseListener(new MouseHandler());
-        
+        endpanel = new EndPanel();
+        endpanel.addMouseListener(new EndPanelMouseHandler());
         
         Image introBackground = loadImage("/Main_Menu.png");
         introPanel = new IntroPanel() {
@@ -384,7 +395,8 @@ public class pvp implements ActionListener {
                 		nz.setMove(true);
                 	}
                 	else{
-                		nz.setMovementSpeed((int)(Math.random()*4+5));
+                		//nz.setMovementSpeed((int)(Math.random()*4+5));
+                		nz.setMovementSpeed(100);
                 		nz.setMove(true);
                 	}
                 	g.drawImage(nz.getimg(),							
@@ -419,17 +431,6 @@ public class pvp implements ActionListener {
         };
 
         mainPanel.add(gamepanel, "game");
-        
-        //Image endBackground = loadImage("/EndImage.png");
-        endpanel = new EndPanel(){
-            @Override
-            public void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D)g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                //g2.drawImage(endBackground, 0, 0, getWidth(), getHeight(), null);
-            }
-        };
         endpanel.setLayout(new BoxLayout(endpanel, BoxLayout.PAGE_AXIS));
         endpanel.setBorder(BorderFactory.createEmptyBorder(500, 10, 100, 10));
         mainPanel.add(endpanel, "end");
@@ -460,11 +461,30 @@ public class pvp implements ActionListener {
     class GamePanel extends JPanel {
 
     }
-    
+
+  //Image endBackground = loadImage("/EndImage.png");
     class EndPanel extends JPanel {
-
+        EndPanel() {
+            exitButton = new ExitButton(550, 500, 100, 50);
+            retryButton = new RetryButton(350, 500, 100, 50);
+        }
+        @Override  
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D)g;
+            if (won){
+                g2.drawImage(loadImage("/WinningScreen.jpg"), 0, 0, getWidth(), getHeight(), null);
+                exitButton.x = 450;
+                exitButton.y = 575;
+                g2.drawImage(loadImage("/ExitButton.png"), exitButton.x, exitButton.y, exitButton.width, exitButton.height, null);
+            } else{
+                g2.drawImage(loadImage("/EndScreen.jpg"), 0, 0, getWidth(), getHeight(), null);
+                g2.drawImage(loadImage("/ExitButton.png"), exitButton.x, exitButton.y, exitButton.width, exitButton.height, null);
+                g2.drawImage(loadImage("/RetryButton.png"), retryButton.x, retryButton.y, retryButton.width, exitButton.height, null);
+            }
+        }
     }
-
+    
     /**
      * Loads an image
      * 
@@ -518,5 +538,36 @@ public class pvp implements ActionListener {
             }
         }
         return false;
+    }
+    private void resetGame(){
+        sunCount = 0;
+        respawnSun();
+        mx=-100;
+        my=-100;
+        frameCtr=0;
+        chosenPlant = -1;
+        plants.clear();
+        zombies.clear();
+        spawnZombieCtr=0;
+        for(int i = 0; i < 9; i++) {
+        	for(int j = 0; j < 5; j++) {
+        		hasPlant[i][j]=false;
+        	}
+        }
+        projectiles.clear();
+        cardLayout.show(mainPanel, "intro");
+        playMusic("soundRes/Grasswalk.wav");
+    }
+
+    private class EndPanelMouseHandler extends MouseAdapter{
+        @Override
+        public void mousePressed(MouseEvent e){
+            if (exitButton.contains(e.getPoint())){
+                System.exit(0);
+            }
+            else if (retryButton.contains(e.getPoint())){
+                resetGame();
+            }
+        }
     }
 }
