@@ -33,10 +33,13 @@ import javax.sound.sampled.Clip;
 public class pvp implements ActionListener {
     JFrame frame;
     static int panW = 1000, panH = 650;
+
     JPanel mainPanel;
     IntroPanel introPanel;
     GamePanel gamepanel;
+    EndPanel endpanel;
     CardLayout cardLayout;
+
     Image sun; 
     Timer timer; 
     Sun sunObj;
@@ -75,7 +78,7 @@ public class pvp implements ActionListener {
         }
     }
     
- // The Buttons:
+    // The Buttons:
     ExitButton exitButton;
     RetryButton retryButton;
 
@@ -171,12 +174,10 @@ public class pvp implements ActionListener {
         frame = new JFrame();
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        EndPanel endpanel;
-        JPanel mainPanel;
-        IntroPanel introPanel;
-        GamePanel gamepanel;
+        
         mainPanel = new JPanel();
         cardLayout = new CardLayout();
+
         playMusic("soundRes/Crazy_Dave.wav");
         mainPanel.setLayout(cardLayout);
         
@@ -251,6 +252,7 @@ public class pvp implements ActionListener {
                 if(zombies.size()==0) {
                 	if(zombieWaveCtr==7) {
                 		//load winning screen;
+                		won=true;
                 	}
                 	else {
                 		for(int i = 0; i < waves[zombieWaveCtr]; i++) {
@@ -268,8 +270,6 @@ public class pvp implements ActionListener {
         timer.start();
         
         mainPanel.addMouseListener(new MouseHandler());
-        endpanel = new EndPanel();
-        endpanel.addMouseListener(new EndPanelMouseHandler());
         
         Image introBackground = loadImage("/Main_Menu.png");
         introPanel = new IntroPanel() {
@@ -395,8 +395,8 @@ public class pvp implements ActionListener {
                 		nz.setMove(true);
                 	}
                 	else{
-                		//nz.setMovementSpeed((int)(Math.random()*4+5));
-                		nz.setMovementSpeed(100);
+                		nz.setMovementSpeed((int)(Math.random()*4+5));
+                		//nz.setMovementSpeed(100);
                 		nz.setMove(true);
                 	}
                 	g.drawImage(nz.getimg(),							
@@ -415,7 +415,7 @@ public class pvp implements ActionListener {
                 		waveFrameCtr++;
                 		String waveFilePath = "/Wave"+Integer.toString(zombieWaveCtr)+".png";
                 		Image waveImg = loadImage(waveFilePath);
-                		if(waveFrameCtr!=7) {
+                		if(zombieWaveCtr!=7) {
                 			g.drawImage(waveImg, 300, 200, 400, 200, null);
                 		}
                 		else {
@@ -431,11 +431,13 @@ public class pvp implements ActionListener {
         };
 
         mainPanel.add(gamepanel, "game");
-        endpanel.setLayout(new BoxLayout(endpanel, BoxLayout.PAGE_AXIS));
-        endpanel.setBorder(BorderFactory.createEmptyBorder(500, 10, 100, 10));
+
+        endpanel = new EndPanel();
+        endpanel.addMouseListener(new EndPanelMouseHandler());
         mainPanel.add(endpanel, "end");
 
         startgame.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(mainPanel, "game");
                 playMusic("soundRes/Grasswalk.wav");
@@ -532,6 +534,7 @@ public class pvp implements ActionListener {
     }
 
     public boolean checkEndGame(){
+    	if(won)return true;
         for (Zombie z : zombies){
             if (z.getX() < 250){
                 return true;
@@ -555,7 +558,8 @@ public class pvp implements ActionListener {
         	}
         }
         projectiles.clear();
-        cardLayout.show(mainPanel, "intro");
+        zombieWaveCtr=0;
+        cardLayout.show(mainPanel, "game");
         playMusic("soundRes/Grasswalk.wav");
     }
 
