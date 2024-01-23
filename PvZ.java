@@ -18,7 +18,6 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
-
 // The main class of the game, runs PvZ
 public class PvZ implements ActionListener {
     // Setting up the JFrame
@@ -44,7 +43,7 @@ public class PvZ implements ActionListener {
     Image sun; 
     Sun sunObj;
     boolean isFalling = false;
-    int sunCount = 10000;
+    int sunCount = 200;
 
     // Mouse coordinates
     int mx=-100, my=-100;
@@ -143,7 +142,6 @@ public class PvZ implements ActionListener {
         		hasPlant[i][j]=false;
         	}
         }  
-
 
         // Adding the intropanel to the main panel
         mainPanel.add(introPanel, "intro");
@@ -323,7 +321,7 @@ public class PvZ implements ActionListener {
      * @return true if the sun should fall, false otherwise
      */
     public boolean checkFall(){
-        int rand = (int)(Math.random() * 500);
+        int rand = (int)(Math.random() * 300);
         return rand == 0;
     }
 
@@ -344,6 +342,10 @@ public class PvZ implements ActionListener {
     	}
     }
     
+    /**
+     * Unused action performed method
+     * @param e the action event
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         throw new UnsupportedOperationException("Unimplemented method 'actionPerformed'");
@@ -676,7 +678,7 @@ public class PvZ implements ActionListener {
      */
     private void resetGame(){
         // Reset the sun count and respawn the sun
-        sunCount = 125;
+        sunCount = 200;
         respawnSun();
         // Reset the mouse coordinates, frame and spawn zombie counter, chosen plant, and the arraylists
         mx=-100;
