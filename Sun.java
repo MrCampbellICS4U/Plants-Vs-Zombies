@@ -1,9 +1,7 @@
-package PlantsVsZombies;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-// Constructor for the Sun class
+// Sun class for the suns that fall from the sky
 class Sun extends Rectangle{
     private double vy = 3.0;
     private double yy; 

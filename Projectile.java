@@ -1,5 +1,3 @@
-package PlantsVsZombies;
-
 import java.awt.Image;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -38,6 +36,11 @@ public class Projectile{
         return new Rectangle(posX, posY, 20, 20);
     }
 
+    /**
+     * Loads an image
+     * @param filename the name of the image
+     * @return the image
+     */
     Image loadImage(String filename) {
 		Image image = null;	
 		java.net.URL imageURL = this.getClass().getResource(filename);
